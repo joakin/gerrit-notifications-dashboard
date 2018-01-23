@@ -1,0 +1,88 @@
+{
+  ".eslintrc.json": [
+    {
+      "author": {
+        "_account_id": 2426,
+        "name": "Niedzielski",
+        "email": "sniedzielski@wikimedia.org",
+        "username": "niedzielski"
+      },
+      "patch_set": 2,
+      "id": "8ef26315_96122400",
+      "line": 33,
+      "range": {
+        "start_line": 33,
+        "start_character": 64,
+        "end_line": 33,
+        "end_character": 69
+      },
+      "updated": "2018-01-18 21:04:09.000000000",
+      "message":
+        "I love the QUnit exception. Should we limit these further to `QUnit\\.(test|module)`? You might also consider excepting the case of a lengthy string appearing by itself on a line, something like the following might omit everything without an apostrophe where your only option would be to break it into multiple strings: `^\\s*\u0027[^\u0027]{80,}\u0027\\s*$`. I guess a downside would be that there are often good opportunities to break apart strings."
+    },
+    {
+      "author": {
+        "_account_id": 2027,
+        "name": "Jhernandez",
+        "email": "jhernandez@wikimedia.org",
+        "username": "jhernandez"
+      },
+      "patch_set": 2,
+      "id": "8ef26315_eaf0d7fc",
+      "line": 33,
+      "range": {
+        "start_line": 33,
+        "start_character": 64,
+        "end_line": 33,
+        "end_character": 69
+      },
+      "in_reply_to": "8ef26315_96122400",
+      "updated": "2018-01-19 09:42:16.000000000",
+      "message":
+        "There are a bunch of methods that could be called on QUnit, main ones are module, only, skip, start, test, todo, but there are even more that could be called, so I kept it generic.\n\nRegarding strings, I really thought about it because there are a bunch of these, but as you said, breaking them is usually easy and better for readability. Horizontally scrolling in the editor is very weird to read a very long string. There are also the cases where we have svg polygons embedded in the renderer as strings and those are big too.\n\nI also thought about whitelisting assertions, but then same as strings it makes you keep them in one lengthy line and they are very hard to read.\n\nFor now I didn\u0027t want to special case too much given how weird it is with the long regex and how big the patch is, stalling it is probably going to cause a bunch of rebase issues. I\u0027m happy to discuss further improvements and cleanup with everyone\u0027s input.\n\nWe should also look into upstreaming this specific rule into https://github.com/wikimedia/eslint-config-wikimedia/ so that all our extensions inherit this rule by default\n\nDoing so should be interesting discussion, and also require some work to help fix repositories."
+    }
+  ],
+  "resources/dist/index.js.json": [
+    {
+      "author": {
+        "_account_id": 2426,
+        "name": "Niedzielski",
+        "email": "sniedzielski@wikimedia.org",
+        "username": "niedzielski"
+      },
+      "patch_set": 2,
+      "id": "8ef26315_56cedc86",
+      "line": 1,
+      "range": {
+        "start_line": 1,
+        "start_character": 123462,
+        "end_line": 1,
+        "end_character": 123476
+      },
+      "updated": "2018-01-18 21:04:09.000000000",
+      "message":
+        "I\u0027m surprised this caused much difference in the output. It looks like the Uglify plugin is used and defaults to compression (and whitespace removal) enabled."
+    },
+    {
+      "author": {
+        "_account_id": 2027,
+        "name": "Jhernandez",
+        "email": "jhernandez@wikimedia.org",
+        "username": "jhernandez"
+      },
+      "patch_set": 2,
+      "id": "8ef26315_6adde772",
+      "line": 1,
+      "range": {
+        "start_line": 1,
+        "start_character": 123462,
+        "end_line": 1,
+        "end_character": 123476
+      },
+      "in_reply_to": "8ef26315_56cedc86",
+      "updated": "2018-01-19 09:42:16.000000000",
+      "message":
+        "This is the source map file of resources/dist/index.js so it actually contains *all* of the original source code compressed preserving everything (whitespace and all) to be able to map the minified to real code in the browser.\n\nMany changes in the sources bundled then do of course change a lot the source map file as it contains all the sources. The minified file resources/dist/index.js didn\u0027t change indeed since the whole patch is only style changes!"
+    }
+  ]
+}
