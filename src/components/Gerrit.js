@@ -59,6 +59,9 @@ export default class Gerrit extends Component {
     return (
       <div>
         <h2>Changes</h2>
+        <p>
+          <button onClick={() => this.getChanges(email)}>Refresh</button>
+        </p>
         {email ? (
           <WithUnreadChanges email={email}>
             {changes => (changes ? this.renderChanges(changes) : <p>...</p>)}
