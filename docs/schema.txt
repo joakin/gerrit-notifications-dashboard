@@ -1,0 +1,19 @@
+change
+  id              marvin~master~Idf95cef30127bcc3e7c5a2ec4c45d99338ba23bd
+  lastSeenMessage 8ef26315_f82d6a8c
+  read true
+  
+  comments
+    id           "8ef26315_96122400"
+    patchset      2
+    author
+      name        niedzielski
+      username    Niedzielski
+      email       snedzielski@wikimedia.org
+    file          .eslintrc.json
+    line          33
+    message       "I love the QUnit exception. Should we limit"
+    updated       "2018-01-18 21:04:09.000000000"
+    in_reply_to   "8ef26315_96122400"
+    read          true
+
