@@ -4,40 +4,14 @@ import {
   createUser,
   justUpdated,
   setChange,
-  setCommentsFromGerrit
+  setCommentsFromGerrit,
+  markChangeRead
 } from "../firebase";
 import { fromGerritDate } from "../date";
-
-const proxy = url => `https://cors-proxy-mhwanfbyyu.now.sh/${url}`;
-const gerritURL = "https://gerrit.wikimedia.org/r/changes/";
-const changesURL = email =>
-  proxy(
-    `${gerritURL}?q=owner:${encodeURIComponent(
-      email
-    )}+OR+reviewer:${encodeURIComponent(
-      email
-    )}&limit=10&o=MESSAGES&o=DETAILED_ACCOUNTS&o=REVIEWER_UPDATES`
-  );
-
-async function fetchGerrit(url) {
-  const txt = await (await fetch(url)).text();
-  const json = JSON.parse(txt.slice(4).trim());
-  return json;
-}
-
-function getChanges(email) {
-  return fetchGerrit(changesURL(email));
-}
-
-const commentsURL = id => proxy(`${gerritURL}${id}/comments`);
-
-function getComments(id) {
-  return fetchGerrit(commentsURL(id));
-}
+import { getChanges, getComments } from "../gerrit";
+import WithUnreadChanges from "./WithUnreadChanges";
 
 export default class Gerrit extends Component {
-  state = { changes: null };
-
   componentDidMount() {
     this.getChanges(this.props.email);
   }
@@ -47,42 +21,85 @@ export default class Gerrit extends Component {
 
   async getChanges(email) {
     if (email) {
+      // Get DB user
       const user = (await createUser(email)).data();
+
       const lastUpdate = user.lastUpdate ? new Date(user.lastUpdate) : null;
+
+      // Get gerrit changes
       const changes = await getChanges(email);
       console.log("FETCHED CHANGES", changes);
+
+      // Select the changes that have been updated since our last fetch
       const updatedChanges = changes.filter(
         ({ updated }) => !lastUpdate || fromGerritDate(updated) > lastUpdate
       );
       console.log("UPDATED CHANGES", updatedChanges);
+
+      // Update the changed changes in the DB
       const updatedDocs = await Promise.all(
         updatedChanges.map(change => setChange(email, change.id, change))
       );
-      await justUpdated(email);
 
+      // Update the comments for updated changes
       await Promise.all(
         updatedDocs.map(doc => doc.data()).map(async change => {
           const comments = await getComments(change.id);
           await setCommentsFromGerrit(email, change.id, comments);
         })
       );
+
+      // Update the last fetch update date
+      await justUpdated(email);
     }
   }
 
   render() {
-    const { changes } = this.state;
+    const { email } = this.props;
     return (
       <div>
         <h2>Changes</h2>
-        <ul>
-          {changes &&
-            changes.map(({ project, subject, id }) => (
-              <li key={id}>
-                {project} - {subject}
-              </li>
-            ))}
-        </ul>
+        {email ? (
+          <WithUnreadChanges email={email}>
+            {changes => (changes ? this.renderChanges(changes) : <p>...</p>)}
+          </WithUnreadChanges>
+        ) : (
+          <p>Log in to see messages</p>
+        )}
       </div>
     );
+  }
+
+  renderChanges(changes) {
+    const byProject = changes.reduce((map, change) => {
+      map[change.project] = (map[change.project] || []).concat(change);
+      return map;
+    }, {});
+    return (
+      <ul>
+        {Object.entries(byProject).map(([project, changes]) => (
+          <li key={project}>
+            {project}
+            <ul>
+              {changes.map(({ id, subject }) => (
+                <li key={id}>
+                  {subject}{" "}
+                  <a
+                    href={"#" + id}
+                    onClick={e => this.markChangeRead(id) || e.preventDefault()}
+                  >
+                    [read]
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  markChangeRead(id) {
+    markChangeRead(this.props.email, id);
   }
 }

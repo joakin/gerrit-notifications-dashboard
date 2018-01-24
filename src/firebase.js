@@ -24,7 +24,7 @@ export const login = _ => firebase.auth().signInWithPopup(provider);
 
 export const onAuthChange = cb => firebase.auth().onAuthStateChanged(cb);
 
-const db = firebase.firestore();
+const db = (window.db = firebase.firestore());
 
 export async function createUser(email) {
   const usersRef = db.collection("users");
@@ -51,14 +51,13 @@ export async function setChange(email, id, payload) {
     .doc(id);
   let doc = await changeRef.get();
   if (!doc.exists) {
-    await changeRef.set({ ...payload, lastMessageSeen: null, read: false });
+    await changeRef.set({ ...payload, read: false });
     doc = await changeRef.get();
   } else {
     const data = doc.data();
     if (fromGerritDate(data.updated) < fromGerritDate(payload.updated)) {
       await changeRef.set({
         ...payload,
-        lastMessageSeen: data.lastMessageSeen,
         read: data.read
       });
       doc = await changeRef.get();
@@ -67,16 +66,52 @@ export async function setChange(email, id, payload) {
   return doc;
 }
 
+export function getUnreadChanges(email) {
+  return db
+    .collection("users")
+    .doc(email)
+    .collection("changes")
+    .where("read", "==", false)
+    .get();
+}
+
+export function onUnreadChanges(email, cb) {
+  return db
+    .collection("users")
+    .doc(email)
+    .collection("changes")
+    .where("read", "==", false)
+    .onSnapshot(cb);
+}
+
+export async function markChangeRead(email, id) {
+  const changeRef = db
+    .collection("users")
+    .doc(email)
+    .collection("changes")
+    .doc(id);
+
+  await changeRef.update({ read: true });
+  const querySnapshot = await changeRef.collection("comments").get();
+
+  const batch = db.batch();
+  querySnapshot.docs.forEach(doc => batch.update(doc.ref, { read: true }));
+  await batch.commit();
+}
+
 async function setComments(email, id, comments) {
   if (!comments || !comments.length) return;
 
   console.log("updating comments", id, comments);
-  const commentsRef = db
+
+  const changeRef = db
     .collection("users")
     .doc(email)
     .collection("changes")
-    .doc(id)
-    .collection("comments");
+    .doc(id);
+  const commentsRef = changeRef.collection("comments");
+
+  let isChangeUnread = false;
 
   const batch = db.batch();
 
@@ -88,11 +123,16 @@ async function setComments(email, id, comments) {
       if (!doc.exists) {
         console.log("updating comment", comment.id);
         batch.set(commentRef, { ...comment, read: false });
+        isChangeUnread = true;
       }
     })
   );
 
-  return batch.commit();
+  await batch.commit();
+
+  if (isChangeUnread) {
+    changeRef.update({ read: false });
+  }
 }
 
 export function setCommentsFromGerrit(email, id, gerritComments) {
