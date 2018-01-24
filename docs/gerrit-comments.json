@@ -17,8 +17,7 @@
         "end_character": 69
       },
       "updated": "2018-01-18 21:04:09.000000000",
-      "message":
-        "I love the QUnit exception. Should we limit these further to `QUnit\\.(test|module)`? You might also consider excepting the case of a lengthy string appearing by itself on a line, something like the following might omit everything without an apostrophe where your only option would be to break it into multiple strings: `^\\s*\u0027[^\u0027]{80,}\u0027\\s*$`. I guess a downside would be that there are often good opportunities to break apart strings."
+      "message": "I love the QUnit exception. Should we limit these further to `QUnit\\.(test|module)`? You might also consider excepting the case of a lengthy string appearing by itself on a line, something like the following might omit everything without an apostrophe where your only option would be to break it into multiple strings: `^\\s*\u0027[^\u0027]{80,}\u0027\\s*$`. I guess a downside would be that there are often good opportunities to break apart strings."
     },
     {
       "author": {
